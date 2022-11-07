@@ -27,10 +27,10 @@ for ($y = 0; $y < $board->size; ++$y) {
 /** @yield Path */
 function generatePath(Board $board, Path $root, int $depth = 1, int &$current = 0): Generator
 {
-    foreach($root->latest()->around($board->size - 1) as $position){
-        if(!$root->has($position)){
+    foreach ($root->latest()->around($board->size - 1) as $position) {
+        if (!$root->has($position)) {
             $path = $root->append($position);
-            if(++$current < $depth){
+            if (++$current < $depth) {
                 yield from generatePath($board, $path, $depth, $current);
             }
             --$current;
@@ -40,12 +40,14 @@ function generatePath(Board $board, Path $root, int $depth = 1, int &$current = 
 }
 
 $pathCounts = [];
-foreach(generatePath($board, new Path(new Position(2, 2)), 9) as $path){
+foreach (generatePath($board, new Path(new Position(2, 2)), 10) as $path) {
     $c = $path->count();
-    if(!isset($pathCounts[$c])) $pathCounts[$c] = 0;
+    if (!isset($pathCounts[$c])) {
+        $pathCounts[$c] = 0;
+    }
     ++$pathCounts[$c];
 }
 echo "Start from (2, 2):\n";
-foreach($pathCounts as $length => $count){
-    echo str_pad((string) $length, 2, pad_type: STR_PAD_LEFT) . " Letters: $count Paths\n";
+foreach ($pathCounts as $length => $count) {
+    echo str_pad((string)$length, 2, pad_type: STR_PAD_LEFT) . " Letters: $count Paths\n";
 }
