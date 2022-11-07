@@ -11,29 +11,29 @@ final class Board
 {
     public readonly int $size;
     private readonly array $letters;
+    private readonly ?Position $doubleWord;
 
     /**
      * @param Letter[] $letters
      */
-    public function __construct(array $letters, private readonly ?Position $doubleWord = null)
+    public function __construct(array $letters, ?int $doubleWord = null)
     {
         array_map(fn($object) => assert($object instanceof Letter), $letters);
         $this->letters = array_values($letters);
 
-        if (empty($letters)) {
-            throw new InvalidArgumentException('There must be at least one letter');
+        $this->size = (int)sqrt($count = count($this->letters));
+        if ($this->size < 2) {
+            throw new InvalidArgumentException('The board size must be 2 or larger');
         }
-
-        $size = (int)sqrt($count = count($this->letters));
-        if ($size ** 2 !== $count) {
+        if ($this->size ** 2 !== $count) {
             throw new InvalidArgumentException('The number of letters must be a square number');
         }
 
-        $this->size = $size;
-
         if ($doubleWord !== null) {
+            $doubleWord = new Position($doubleWord % $this->size, (int)($doubleWord / $this->size));
             $this->validatePosition($doubleWord);
         }
+        $this->doubleWord = $doubleWord;
     }
 
     private function validatePosition(Position $position): void
