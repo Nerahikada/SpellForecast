@@ -20,7 +20,7 @@ final class Path implements Iterator, Countable
 
     public function append(Position $position): self
     {
-        if (isset($this->nodes[$position->hash])) {
+        if ($this->has($position)) {
             throw new InvalidArgumentException('Do not pass the same coordinates twice');
         }
         if ($this->valid() && $this->current()->distance($position) > 1) {
@@ -32,6 +32,11 @@ final class Path implements Iterator, Countable
         $path->next();
 
         return $path;
+    }
+
+    public function has(Position $position): bool
+    {
+        return isset($this->nodes[$position->hash]);
     }
 
     public function valid(): bool

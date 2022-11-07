@@ -27,7 +27,7 @@ final class Board
 
         $this->size = $size;
 
-        $this->validatePosition($this->doubleWord);
+        $this->validatePosition($doubleWord);
     }
 
     private function validatePosition(Position $position): void
@@ -44,5 +44,15 @@ final class Board
     {
         $this->validatePosition($position);
         return $this->letters[$position->x + $position->y * $this->size];
+    }
+
+    public function getWord(Path $path): Word
+    {
+        $letters = array_map($this->getLetter(...), iterator_to_array($path));
+        $point = array_sum(array_map(fn(Letter $l) => $l->point, $letters));
+        if ($path->has($this->doubleWord)) {
+            $point *= 2;
+        }
+        return new Word($path, implode("", $letters), $point);
     }
 }
