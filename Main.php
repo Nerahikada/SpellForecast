@@ -2,15 +2,19 @@
 
 declare(strict_types=1);
 
-require 'vendor/autoload.php';
-
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
+use Nerahikada\SpellForecast\Algorithm\PathFinder;
 use Nerahikada\SpellForecast\BlackBox\WordDictionary;
 use Nerahikada\SpellForecast\Board;
 use Nerahikada\SpellForecast\Letter;
 use Nerahikada\SpellForecast\Path;
 use Nerahikada\SpellForecast\Position;
+use parallel\Future;
+
+use function parallel\bootstrap;
+use function parallel\run;
+
+require 'vendor/autoload.php';
+bootstrap('vendor/autoload.php');
 
 $board = new Board([
     new Letter('D'), new Letter('R'), new Letter('M'), new Letter('O'), new Letter('E'),
@@ -27,41 +31,28 @@ for ($y = 0; $y < $board->size; ++$y) {
     echo PHP_EOL;
 }
 
-/** @yield Path */
-function generatePath(Board $board, Path $root, int $depth = 1, int &$current = 0): Generator
-{
-    foreach ($root->latest()->around($board->size - 1) as $position) {
-        if (!$root->has($position)) {
-            $path = $root->append($position);
-            if (++$current < $depth) {
-                yield from generatePath($board, $path, $depth, $current);
-            }
-            --$current;
-            yield $path;
-        }
-    }
-}
+$pathFinder = new PathFinder($board);
+$dictionary = new WordDictionary();
 
-$logger = new Logger('SpellForecast', [new StreamHandler('php://stdout')]);
-$dictionary = new WordDictionary($logger->withName('WordDictionary'));
-
-$validWords = [];
+/** @var Future[] $futures */
+$futures = [];
 for ($y = 0; $y < $board->size; ++$y) {
     for ($x = 0; $x < $board->size; ++$x) {
-        foreach(generatePath($board, new Path(new Position($x, $y)), 6) as $path){
-            $word = $board->getWord($path);
-            if($dictionary->contain($word)){
-                $validWords[] = $word;
+        $futures[] = run(function () use ($pathFinder, $x, $y, $dictionary) {
+            $words = [];
+            foreach ($pathFinder->generatePath(new Path(new Position($x, $y)), /*11*/7) as $path) {
+                $word = $pathFinder->board->getWord($path);
+                if ($dictionary->contain($word)) {
+                    $words[] = $word;
+                }
             }
-        }
+            return $words;
+        });
     }
 }
-//var_dump($validWords);
 
-$pathCounts = [];
-foreach(generatePath($board, new Path(new Position(2, 2)), 24) as $path){
-    $c = count($path);
-    if(!isset($pathCounts[$c])) $pathCounts[$c] = 0;
-    ++$pathCounts[$c];
+$validWords = [];
+foreach ($futures as $future) {
+    $validWords = [...$validWords, ...$future->value()];
 }
-var_dump($pathCounts);
+var_dump(count($validWords));

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nerahikada\SpellForecast\BlackBox;
 
-use Monolog\Logger;
 use Nerahikada\SpellForecast\Word;
 
 final class WordDictionary
@@ -14,10 +13,8 @@ final class WordDictionary
 
     private readonly array $words;
 
-    public function __construct(private readonly Logger $logger)
+    public function __construct()
     {
-        $this->logger->debug('Fetching contents list from GitHub...');
-
         $contents = json_decode(
             file_get_contents(
                 'https://api.github.com/repos/jacksonrayhamilton/wordlist-english/contents/sources',
@@ -28,8 +25,6 @@ final class WordDictionary
 
         $words = [];
         foreach ($contents as $content) {
-            $this->logger->debug('Downloading word list from GitHub...', [$content['name']]);
-
             $raw = file_get_contents($content['download_url']);
             foreach (explode("\n", $raw) as $line) {
                 $line = strtoupper(trim($line));
@@ -39,7 +34,6 @@ final class WordDictionary
             }
         }
 
-        $this->logger->debug('Dictionary initialization is complete', [count($words)]);
         $this->words = $words;
     }
 

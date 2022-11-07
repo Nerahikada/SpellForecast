@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Nerahikada\SpellForecast;
 
-use Countable;
 use InvalidArgumentException;
 use Iterator;
 
-final class Path implements Iterator, Countable
+final class Path implements Iterator
 {
     /** @var Position[] */
     private array $nodes;
@@ -66,10 +65,5 @@ final class Path implements Iterator, Countable
     public function rewind(): void
     {
         reset($this->nodes);
-    }
-
-    public function count(): int
-    {
-        return count($this->nodes);
     }
 }
