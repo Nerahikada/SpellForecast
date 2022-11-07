@@ -32,17 +32,17 @@ for ($y = 0; $y < $board->size; ++$y) {
 }
 
 $pathFinder = new PathFinder($board);
-$dictionary = new WordDictionary();
+$globalDictionary = new WordDictionary();
 
 /** @var Future[] $futures */
 $futures = [];
 for ($y = 0; $y < $board->size; ++$y) {
     for ($x = 0; $x < $board->size; ++$x) {
-        $futures[] = run(function () use ($pathFinder, $x, $y, $dictionary) {
+        $futures[] = run(function () use ($globalDictionary, $pathFinder, $x, $y) {
             $words = [];
             foreach ($pathFinder->generatePath(new Path(new Position($x, $y)), /*11*/7) as $path) {
                 $word = $pathFinder->board->getWord($path);
-                if ($dictionary->contain($word)) {
+                if ($globalDictionary->contain($word)) {
                     $words[] = $word;
                 }
             }
@@ -55,4 +55,6 @@ $validWords = [];
 foreach ($futures as $future) {
     $validWords = [...$validWords, ...$future->value()];
 }
-var_dump(count($validWords));
+
+usort($validWords, fn($a, $b) : int => $b->point <=> $a->point);
+for($i = 0; $i < 5; ++$i){var_dump(current($validWords)->point);next($validWords);}
