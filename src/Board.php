@@ -9,7 +9,7 @@ use OutOfRangeException;
 
 final class Board
 {
-    private readonly int $size;
+    public readonly int $size;
     private readonly array $letters;
 
     /**

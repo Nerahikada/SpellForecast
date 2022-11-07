@@ -6,6 +6,7 @@ require 'vendor/autoload.php';
 
 use Nerahikada\SpellForecast\Board;
 use Nerahikada\SpellForecast\Letter;
+use Nerahikada\SpellForecast\Path;
 use Nerahikada\SpellForecast\Position;
 
 $board = new Board([
@@ -16,9 +17,39 @@ $board = new Board([
     new Letter('A'), new Letter('Y', 2), new Letter('O'), new Letter('N'), new Letter('O'),
 ], new Position(4, 3));
 
-for ($y = 0; $y < 5; ++$y) {
-    for ($x = 0; $x < 5; ++$x) {
+for ($y = 0; $y < $board->size; ++$y) {
+    for ($x = 0; $x < $board->size; ++$x) {
         echo $board->getLetter(new Position($x, $y)) . ' ';
     }
     echo PHP_EOL;
+}
+
+$findAroundPaths = function (array $roots) use ($board): array {
+    $paths = [];
+    /** @var Path[] $roots */
+    foreach ($roots as $root) {
+        foreach ($root->current()->around($board->size) as $position) {
+            $path = clone $root;
+            try {
+                $path->append($position);
+                $paths[] = $path;
+            } catch (InvalidArgumentException) {
+            }
+        }
+    }
+    return $paths;
+};
+$pathsArray = [[new Path(new Position(2, 2))]];
+for($length = 2; $length <= 7; ++$length){
+    $pathsArray[$length - 1] = $findAroundPaths($pathsArray[$length - 2]);
+}
+foreach($pathsArray as $length => $paths){
+    echo ($length + 1) . " Letters: " . count($paths) . " Paths\n";
+    /*
+    foreach($paths as $key => $path){
+        echo "Path #$key: ";
+        foreach($path as $position) echo "($position->x,$position->y) ";
+        echo "| " . count($path) . " nodes\n";
+    }
+    */
 }
