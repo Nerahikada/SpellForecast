@@ -8,6 +8,7 @@ use Nerahikada\SpellForecast\Board;
 use Nerahikada\SpellForecast\Letter;
 use Nerahikada\SpellForecast\Path;
 use Nerahikada\SpellForecast\Position;
+use Nerahikada\SpellForecast\Word;
 use parallel\Future;
 
 use function parallel\bootstrap;
@@ -15,6 +16,8 @@ use function parallel\run;
 
 require 'vendor/autoload.php';
 bootstrap('vendor/autoload.php');
+
+$globalDictionary = new WordDictionary();
 
 $board = new Board([
     new Letter('D'), new Letter('R'), new Letter('M'), new Letter('O'), new Letter('E'),
@@ -31,30 +34,33 @@ for ($y = 0; $y < $board->size; ++$y) {
     echo PHP_EOL;
 }
 
-$pathFinder = new PathFinder($board);
-$globalDictionary = new WordDictionary();
-
 /** @var Future[] $futures */
 $futures = [];
+
+/** @return Word[] */
+$findValidWords = function(/*Position */$start)use($globalDictionary, $board) : array{
+    $words = [];
+
+    $pathFinder = new PathFinder($board);
+    foreach ($pathFinder->generatePath(new Path($start), /*11*/ 7) as $path) {
+        $word = $board->getWord($path);
+        if ($globalDictionary->contain($word)) {
+            $words[] = $word;
+        }
+    }
+
+    return $words;
+};
+
 for ($y = 0; $y < $board->size; ++$y) {
     for ($x = 0; $x < $board->size; ++$x) {
-        $futures[] = run(function () use ($globalDictionary, $pathFinder, $x, $y) {
-            $words = [];
-            foreach ($pathFinder->generatePath(new Path(new Position($x, $y)), /*11*/7) as $path) {
-                $word = $pathFinder->board->getWord($path);
-                if ($globalDictionary->contain($word)) {
-                    $words[] = $word;
-                }
-            }
-            return $words;
-        });
+        $futures[] = run($findValidWords, [new Position($x, $y)]);
     }
 }
-
 $validWords = [];
 foreach ($futures as $future) {
     $validWords = [...$validWords, ...$future->value()];
 }
 
-usort($validWords, fn($a, $b) : int => $b->point <=> $a->point);
-for($i = 0; $i < 5; ++$i){var_dump(current($validWords)->point);next($validWords);}
+usort($validWords, fn($a, $b): int => $b->point <=> $a->point);
+for ($i = 0; $i < 5; ++$i) {var_dump(current($validWords)->point);next($validWords);}

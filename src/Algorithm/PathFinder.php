@@ -10,7 +10,7 @@ use Nerahikada\SpellForecast\Path;
 
 final class PathFinder
 {
-    public function __construct(public readonly Board $board)
+    public function __construct(private readonly Board $board)
     {
     }
 

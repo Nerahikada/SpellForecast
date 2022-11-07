@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nerahikada\SpellForecast;
 
+use Generator;
 use InvalidArgumentException;
 use OutOfRangeException;
 
