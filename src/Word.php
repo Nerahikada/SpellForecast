@@ -6,10 +6,16 @@ namespace Nerahikada\SpellForecast;
 
 final class Word
 {
+    public readonly int $point;
+
     public function __construct(
         public readonly Path $path,
         public readonly string $chars,
-        public readonly int $point
+        int $point
     ) {
+        if (strlen($chars) >= 7) {
+            $point += 20;
+        }
+        $this->point = $point;
     }
 }
