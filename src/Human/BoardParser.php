@@ -63,11 +63,11 @@ final class BoardParser
                 ++$i;
             }
 
-            $letters[] = new Letter($char, $multiply);
-
             if (ctype_upper($char)) {
-                $doubleWord = $i;
+                $doubleWord = count($letters);
             }
+
+            $letters[] = new Letter($char, $multiply);
         }
     }
 
