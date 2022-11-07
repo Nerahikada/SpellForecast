@@ -18,10 +18,7 @@ final class Path implements Iterator, Countable
         $this->nodes[$start->hash] = $start;
     }
 
-    /**
-     * 要素を追加し、ポインタを次に進めます。
-     */
-    public function append(Position $position): void
+    public function append(Position $position): self
     {
         if (isset($this->nodes[$position->hash])) {
             throw new InvalidArgumentException('Do not pass the same coordinates twice');
@@ -29,8 +26,17 @@ final class Path implements Iterator, Countable
         if ($this->valid() && $this->current()->distance($position) > 1) {
             throw new InvalidArgumentException('The distance must be 1');
         }
-        $this->nodes[$position->hash] = $position;
-        $this->next();
+
+        $path = clone $this;
+        $path->nodes[$position->hash] = $position;
+        $path->next();
+
+        return $path;
+    }
+
+    public function valid(): bool
+    {
+        return current($this->nodes) !== false;
     }
 
     public function current(): Position
@@ -46,11 +52,6 @@ final class Path implements Iterator, Countable
     public function key(): int
     {
         return key($this->nodes);
-    }
-
-    public function valid(): bool
-    {
-        return current($this->nodes) !== false;
     }
 
     public function rewind(): void

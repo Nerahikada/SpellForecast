@@ -29,10 +29,8 @@ $findAroundPaths = function (array $roots) use ($board): array {
     /** @var Path[] $roots */
     foreach ($roots as $root) {
         foreach ($root->current()->around($board->size) as $position) {
-            $path = clone $root;
             try {
-                $path->append($position);
-                $paths[] = $path;
+                $paths[] = $root->append($position);
             } catch (InvalidArgumentException) {
             }
         }
