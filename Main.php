@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
-use Nerahikada\SpellForecast\BlackBox\WordJudge;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use Nerahikada\SpellForecast\BlackBox\WordDictionary;
 use Nerahikada\SpellForecast\Board;
 use Nerahikada\SpellForecast\Letter;
 use Nerahikada\SpellForecast\Path;
@@ -40,16 +42,26 @@ function generatePath(Board $board, Path $root, int $depth = 1, int &$current = 
     }
 }
 
-$dictionary = new WordJudge();
+$logger = new Logger('SpellForecast', [new StreamHandler('php://stdout')]);
+$dictionary = new WordDictionary($logger->withName('WordDictionary'));
+
 $validWords = [];
 for ($y = 0; $y < $board->size; ++$y) {
     for ($x = 0; $x < $board->size; ++$x) {
         foreach(generatePath($board, new Path(new Position($x, $y)), 6) as $path){
             $word = $board->getWord($path);
-            if($dictionary->validate($word)){
+            if($dictionary->contain($word)){
                 $validWords[] = $word;
             }
         }
     }
 }
-var_dump($validWords);
+//var_dump($validWords);
+
+$pathCounts = [];
+foreach(generatePath($board, new Path(new Position(2, 2)), 24) as $path){
+    $c = count($path);
+    if(!isset($pathCounts[$c])) $pathCounts[$c] = 0;
+    ++$pathCounts[$c];
+}
+var_dump($pathCounts);

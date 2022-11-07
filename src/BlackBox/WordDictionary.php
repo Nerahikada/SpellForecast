@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace Nerahikada\SpellForecast\BlackBox;
 
+use Monolog\Logger;
 use Nerahikada\SpellForecast\Word;
 
-final class WordJudge
+final class WordDictionary
 {
     private const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36';
     private const BLACK_LISTS = ['FUCK', 'NIGGER', 'SEX',];
 
     private readonly array $words;
 
-    public function __construct()
+    public function __construct(private readonly Logger $logger)
     {
+        $this->logger->debug('Fetching contents list from GitHub...');
+
         $contents = json_decode(
             file_get_contents(
                 'https://api.github.com/repos/jacksonrayhamilton/wordlist-english/contents/sources',
@@ -25,6 +28,8 @@ final class WordJudge
 
         $words = [];
         foreach ($contents as $content) {
+            $this->logger->debug('Downloading word list from GitHub...', [$content['name']]);
+
             $raw = file_get_contents($content['download_url']);
             foreach (explode("\n", $raw) as $line) {
                 $line = strtoupper(trim($line));
@@ -34,10 +39,11 @@ final class WordJudge
             }
         }
 
+        $this->logger->debug('Dictionary initialization is complete', [count($words)]);
         $this->words = $words;
     }
 
-    public function validate(Word $word): bool
+    public function contain(Word $word): bool
     {
         return isset($this->words[sha1($word->chars, true)]);
     }
