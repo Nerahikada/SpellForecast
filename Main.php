@@ -25,7 +25,7 @@ $findValidWords = function (/*Position */ $start) use ($globalDictionary, $board
     $words = [];
 
     $pathFinder = new PathFinder($board);
-    foreach ($pathFinder->generatePath(new Path($start), /*11*/ 6) as $path) {
+    foreach ($pathFinder->generatePath(new Path($start), /*11*/ 8) as $path) {
         $word = $board->getWord($path);
         if ($globalDictionary->contain($word)) {
             $words[] = $word;
@@ -35,26 +35,29 @@ $findValidWords = function (/*Position */ $start) use ($globalDictionary, $board
     return $words;
 };
 
-/** @var Word[] $validWords */
-$validWords = [];
-
 /** @var Future[] $futures */
-//$futures = [];
+$futures = [];
+echo 'Running new runtime... ';
 for ($y = 0; $y < $board->size; ++$y) {
     for ($x = 0; $x < $board->size; ++$x) {
-        //$futures[] = run($findValidWords, [new Position($x, $y)]);
-        $validWords = [...$validWords, ...$findValidWords(new Position($x, $y))];
+        $futures[] = $future = run($findValidWords, [new Position($x, $y)]);
+        echo count($futures);
     }
 }
+echo PHP_EOL;
 /** @var Word[] $validWords */
-/*
 $validWords = [];
-foreach ($futures as $future) {
+echo 'Waiting future result... ';
+foreach ($futures as $key => $future) {
+    echo $key + 1;
     $validWords = [...$validWords, ...$future->value()];
 }
-*/
+echo PHP_EOL;
 
 usort($validWords, fn($a, $b): int => $b->point <=> $a->point);
-for ($i = 0; $i < 5; ++$i) {
-    echo '#' . ($i + 1) . ': ' . $validWords[$i]->chars . ' (' . $validWords[$i]->point . ')' . PHP_EOL;
+for ($i = 0; $i < 10; ++$i) {
+    $word = $validWords[$i];
+    echo "#$i: $word->chars ($word->point) ";
+    foreach($word->path as $p) echo "($p->x,$p->y)";
+    echo PHP_EOL;
 }
