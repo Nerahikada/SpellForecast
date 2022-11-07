@@ -16,23 +16,25 @@ use function parallel\run;
 require 'vendor/autoload.php';
 bootstrap('vendor/autoload.php');
 
-$globalDictionary = new WordDictionary();
-
 $board = (new BoardParser())->result();
 
-/** @return Word[] */
-$findValidWords = function (/*Position */ $start) use ($globalDictionary, $board): array {
-    $words = [];
+/** @return string[] */
+$findValidWords = function (string $serializedBoard, string $serializedPosition) : array {
+    $board = unserialize($serializedBoard);
+    $start = unserialize($serializedPosition);
 
     $pathFinder = new PathFinder($board);
+    $dictionary = new WordDictionary();
+    $serializedWords = [];
+
     foreach ($pathFinder->generatePath(new Path($start), /*11*/ 8) as $path) {
         $word = $board->getWord($path);
-        if ($globalDictionary->contain($word)) {
-            $words[] = $word;
+        if ($dictionary->contain($word)) {
+            $serializedWords[] = serialize($word);
         }
     }
 
-    return $words;
+    return $serializedWords;
 };
 
 /** @var Future[] $futures */
@@ -40,21 +42,23 @@ $futures = [];
 echo 'Running new runtime... ';
 for ($y = 0; $y < $board->size; ++$y) {
     for ($x = 0; $x < $board->size; ++$x) {
-        $futures[] = $future = run($findValidWords, [new Position($x, $y)]);
+        $futures[] = run($findValidWords, [serialize($board), serialize(new Position($x, $y))]);
         echo count($futures);
     }
 }
 echo PHP_EOL;
+
 /** @var Word[] $validWords */
 $validWords = [];
 echo 'Waiting future result... ';
 foreach ($futures as $key => $future) {
     echo $key + 1;
-    $validWords = [...$validWords, ...$future->value()];
+    array_push($validWords, ...array_map(unserialize(...), $future->value()));
 }
 echo PHP_EOL;
 
 usort($validWords, fn($a, $b): int => $b->point <=> $a->point);
+
 for ($i = 0; $i < 10; ++$i) {
     $word = $validWords[$i];
     echo "#$i: $word->chars ($word->point) ";
