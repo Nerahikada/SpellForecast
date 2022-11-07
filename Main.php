@@ -19,30 +19,30 @@ bootstrap('vendor/autoload.php');
 
 $globalDictionary = new WordDictionary();
 
-$board = new Board([
-    new Letter('D'), new Letter('R'), new Letter('M'), new Letter('O'), new Letter('E'),
-    new Letter('N'), new Letter('O'), new Letter('N'), new Letter('S'), new Letter('K'),
-    new Letter('A'), new Letter('A'), new Letter('T'), new Letter('A'), new Letter('T'),
-    new Letter('O'), new Letter('R'), new Letter('W'), new Letter('F'), new Letter('I'),
-    new Letter('A'), new Letter('Y', 2), new Letter('O'), new Letter('N'), new Letter('O'),
-], new Position(4, 3));
-
-for ($y = 0; $y < $board->size; ++$y) {
-    for ($x = 0; $x < $board->size; ++$x) {
-        echo $board->getLetter(new Position($x, $y)) . ' ';
+// FIX: 入力を全面信頼したゴミ
+$letters = [];
+$inputs = readline('Input board: ');
+$offset = 0;
+while(strlen($inputs) > $offset){
+    $char = $inputs[$offset];
+    $multiply = 1;
+    if(ctype_digit($inputs[$offset + 1] ?? '')){
+        $multiply = (int) $inputs[++$offset];
     }
-    echo PHP_EOL;
+    $letters[] = new Letter($char, $multiply);
+    ++$offset;
 }
+$doubleWord = array_values(array_filter(str_split(readline('Input double word (XY): ')), ctype_alnum(...)));
+$doubleWord = !empty($doubleWord) ? new Position((int) $doubleWord[0], (int) $doubleWord[1]) : null;
 
-/** @var Future[] $futures */
-$futures = [];
+$board = new Board($letters, $doubleWord);
 
 /** @return Word[] */
-$findValidWords = function(/*Position */$start)use($globalDictionary, $board) : array{
+$findValidWords = function (/*Position */ $start) use ($globalDictionary, $board): array {
     $words = [];
 
     $pathFinder = new PathFinder($board);
-    foreach ($pathFinder->generatePath(new Path($start), /*11*/ 7) as $path) {
+    foreach ($pathFinder->generatePath(new Path($start), /*11*/ 6) as $path) {
         $word = $board->getWord($path);
         if ($globalDictionary->contain($word)) {
             $words[] = $word;
@@ -52,15 +52,26 @@ $findValidWords = function(/*Position */$start)use($globalDictionary, $board) : 
     return $words;
 };
 
+/** @var Word[] $validWords */
+$validWords = [];
+
+/** @var Future[] $futures */
+//$futures = [];
 for ($y = 0; $y < $board->size; ++$y) {
     for ($x = 0; $x < $board->size; ++$x) {
-        $futures[] = run($findValidWords, [new Position($x, $y)]);
+        //$futures[] = run($findValidWords, [new Position($x, $y)]);
+        $validWords = [...$validWords, ...$findValidWords(new Position($x, $y))];
     }
 }
+/** @var Word[] $validWords */
+/*
 $validWords = [];
 foreach ($futures as $future) {
     $validWords = [...$validWords, ...$future->value()];
 }
+*/
 
 usort($validWords, fn($a, $b): int => $b->point <=> $a->point);
-for ($i = 0; $i < 5; ++$i) {var_dump(current($validWords)->point);next($validWords);}
+for ($i = 0; $i < 5; ++$i) {
+    echo '#' . ($i + 1) . ': ' . $validWords[$i]->chars . ' (' . $validWords[$i]->point . ')' . PHP_EOL;
+}

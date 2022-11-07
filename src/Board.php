@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Nerahikada\SpellForecast;
 
-use Generator;
 use InvalidArgumentException;
 use OutOfRangeException;
 
@@ -16,10 +15,14 @@ final class Board
     /**
      * @param Letter[] $letters
      */
-    public function __construct(array $letters, private readonly Position $doubleWord)
+    public function __construct(array $letters, private readonly ?Position $doubleWord = null)
     {
         array_map(fn($object) => assert($object instanceof Letter), $letters);
         $this->letters = array_values($letters);
+
+        if (empty($letters)) {
+            throw new InvalidArgumentException('There must be at least one letter');
+        }
 
         $size = (int)sqrt($count = count($this->letters));
         if ($size ** 2 !== $count) {
@@ -28,7 +31,9 @@ final class Board
 
         $this->size = $size;
 
-        $this->validatePosition($doubleWord);
+        if ($doubleWord !== null) {
+            $this->validatePosition($doubleWord);
+        }
     }
 
     private function validatePosition(Position $position): void
@@ -51,7 +56,7 @@ final class Board
     {
         $letters = array_map($this->getLetter(...), iterator_to_array($path));
         $point = array_sum(array_map(fn(Letter $l) => $l->point, $letters));
-        if ($path->has($this->doubleWord)) {
+        if ($this->doubleWord !== null && $path->has($this->doubleWord)) {
             $point *= 2;
         }
         return new Word($path, implode("", $letters), $point);
