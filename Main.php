@@ -59,9 +59,10 @@ echo PHP_EOL;
 
 usort($validWords, fn($a, $b): int => $b->point <=> $a->point);
 
-for ($i = 0; $i < 10; ++$i) {
+for ($i = 0; $i < 5; ++$i) {
     $word = $validWords[$i];
-    echo "#$i: $word->chars ($word->point) ";
+    echo str_pad('#' . ($i + 1), 3, pad_type: STR_PAD_LEFT);
+    echo ": $word->chars ($word->point) ";
     foreach($word->path as $p) echo "($p->x,$p->y)";
     echo PHP_EOL;
 }
