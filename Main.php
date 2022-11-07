@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require 'vendor/autoload.php';
 
+use Nerahikada\SpellForecast\BlackBox\WordJudge;
 use Nerahikada\SpellForecast\Board;
 use Nerahikada\SpellForecast\Letter;
 use Nerahikada\SpellForecast\Path;
@@ -39,15 +40,16 @@ function generatePath(Board $board, Path $root, int $depth = 1, int &$current = 
     }
 }
 
-$pathCounts = [];
-foreach (generatePath($board, new Path(new Position(2, 2)), 10) as $path) {
-    $c = $path->count();
-    if (!isset($pathCounts[$c])) {
-        $pathCounts[$c] = 0;
+$dictionary = new WordJudge();
+$validWords = [];
+for ($y = 0; $y < $board->size; ++$y) {
+    for ($x = 0; $x < $board->size; ++$x) {
+        foreach(generatePath($board, new Path(new Position($x, $y)), 6) as $path){
+            $word = $board->getWord($path);
+            if($dictionary->validate($word)){
+                $validWords[] = $word;
+            }
+        }
     }
-    ++$pathCounts[$c];
 }
-echo "Start from (2, 2):\n";
-foreach ($pathCounts as $length => $count) {
-    echo str_pad((string)$length, 2, pad_type: STR_PAD_LEFT) . " Letters: $count Paths\n";
-}
+var_dump($validWords);
