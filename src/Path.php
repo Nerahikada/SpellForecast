@@ -23,13 +23,12 @@ final class Path implements Iterator, Countable
         if ($this->has($position)) {
             throw new InvalidArgumentException('Do not pass the same coordinates twice');
         }
-        if ($this->valid() && $this->current()->distance($position) > 1) {
+        if ($this->valid() && $this->latest()->distance($position) > 1) {
             throw new InvalidArgumentException('The distance must be 1');
         }
 
         $path = clone $this;
         $path->nodes[$position->hash] = $position;
-        $path->next();
 
         return $path;
     }
@@ -37,6 +36,11 @@ final class Path implements Iterator, Countable
     public function has(Position $position): bool
     {
         return isset($this->nodes[$position->hash]);
+    }
+
+    public function latest(): Position
+    {
+        return $this->nodes[array_key_last($this->nodes)];
     }
 
     public function valid(): bool
