@@ -25,16 +25,6 @@ final class Position
         $this->hash = ($x + $y) * ($x + $y + 1) / 2 + $y;
     }
 
-    public function add(int $x, int $y): self
-    {
-        return new self($this->x + $x, $this->y + $y);
-    }
-
-    public function subtract(int $x, int $y): self
-    {
-        return new self($this->x - $x, $this->y - $y);
-    }
-
     public function distance(Position $position): int
     {
         return max(abs($this->x - $position->x), abs($this->y - $position->y));
