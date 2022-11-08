@@ -14,10 +14,11 @@ require 'vendor/autoload.php';
 
 $board = (new BoardParser())->result();
 
+$dictionary = new WordDictionary();
+
 /** @return Word[] */
-$findValidWords = function (Board $board, Position $start) : array {
+$findValidWords = function (Board $board, Position $start) use ($dictionary): array {
     $pathFinder = new PathFinder($board);
-    $dictionary = new WordDictionary();
     $words = [];
 
     foreach ($pathFinder->generatePath(new Path($start), /*11*/ 8) as $path) {
