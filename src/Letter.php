@@ -11,7 +11,7 @@ final class Letter
     public readonly string $char;
     public readonly int $point;
 
-    public function __construct(string $char, int $multiply = 1)
+    public function __construct(string $char, public readonly int $multiply = 1)
     {
         if (strlen($char) !== 1) {
             throw new InvalidArgumentException('Char must be a single character');
