@@ -38,6 +38,7 @@ final class WordListDownloader
         }
 
         SimpleLogger::debug("Fetched " . count($words) . " words");
-        $this->result = $words;
+        $this->result = array_unique($words);
+        SimpleLogger::debug("Found " . count($this->result) . " unique words");
     }
 }
