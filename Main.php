@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Nerahikada\SpellForecast\Algorithm\PathFinder;
 use Nerahikada\SpellForecast\BlackBox\WordDictionary;
-use Nerahikada\SpellForecast\Human\BoardParser;
+use Nerahikada\SpellForecast\Parser\BoardParser;
 use Nerahikada\SpellForecast\Path;
 use Nerahikada\SpellForecast\Position;
 use Nerahikada\SpellForecast\Word;
