@@ -31,7 +31,7 @@ final class WordListDownloader
         foreach ($contents as $content) {
             SimpleLogger::debug("Downloading file \"{$content["name"]}\"...");
             foreach (explode("\n", file_get_contents($content['download_url'])) as $line) {
-                if (ctype_alpha($line = trim($line))) {
+                if (ctype_alpha($line = strtolower(trim($line)))) {
                     $words[] = $line;
                 }
             }
