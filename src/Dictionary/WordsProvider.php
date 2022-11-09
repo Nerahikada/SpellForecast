@@ -17,7 +17,7 @@ final class WordsProvider
             mkdir('.cache');
         }
         if(!file_exists('.cache/dictionary.txt')){
-            $words = (new WordListDownloader())->result;
+            $words = (new WordListDownloader())->get();
             $this->sort($words);
             file_put_contents('.cache/dictionary.txt', implode("\n", $words));
         }else{

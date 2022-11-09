@@ -11,9 +11,10 @@ final class SimpleLogger
 {
     public static function debug(string $message): void
     {
-        $class = debug_backtrace(!DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1]['class'];
-        $class = (new ReflectionClass($class))->getShortName();
-        fwrite(STDOUT, self::timestamp() . ' | ' . $class . " >> " . $message . PHP_EOL);
+        $trace = debug_backtrace(!DEBUG_BACKTRACE_PROVIDE_OBJECT | DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $trace = $trace[1] ?? $trace[0];
+        $caller = isset($trace['class']) ? (new ReflectionClass($trace['class']))->getShortName() : $trace['method'];
+        fwrite(STDOUT, self::timestamp() . ' | ' . $caller . " >> " . $message . PHP_EOL);
     }
 
     private static function timestamp(): string

@@ -5,40 +5,53 @@ declare(strict_types=1);
 namespace Nerahikada\SpellForecast\Dictionary;
 
 use Nerahikada\SpellForecast\Utils\SimpleLogger;
+use RuntimeException;
+use stdClass;
 
 final class WordListDownloader
 {
-    /** @var string[] */
-    public readonly array $result;
-
     public function __construct(
-        string $repository = 'jacksonrayhamilton/wordlist-english',
-        string $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
+        private readonly string $userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36'
     ) {
-        SimpleLogger::debug("Fetching contents from $repository...");
-        $contents = json_decode(
-            file_get_contents(
-                'https://api.github.com/repos/' . $repository . '/contents/sources',
-                context: stream_context_create(['http' => ['user_agent' => $userAgent]])
-            ),
-            true,
-            flags: JSON_THROW_ON_ERROR
-        );
-        SimpleLogger::debug("Fetched " . count($contents) . " contents");
+    }
 
+    public function get(): array
+    {
+        /** @var string[] $words */
         $words = [];
 
-        foreach ($contents as $content) {
-            SimpleLogger::debug("Downloading file \"{$content["name"]}\"...");
-            foreach (explode("\n", file_get_contents($content['download_url'])) as $line) {
-                if (ctype_alpha($line = strtolower(trim($line))) && strlen($line) > 1) {
-                    $words[] = $line;
+        foreach ($this->fetchContents() as $content) {
+            SimpleLogger::debug("Downloading file \"$content->name\"...");
+            foreach (explode("\n", file_get_contents($content->download_url)) as $line) {
+                if (ctype_alnum($word = trim($line)) && strlen($line) > 1) {
+                    $words[] = $word;
                 }
             }
         }
 
-        SimpleLogger::debug("Fetched " . count($words) . " words");
-        $this->result = array_unique($words);
-        SimpleLogger::debug("Found " . count($this->result) . " unique words");
+        return $words;
+    }
+
+    /**
+     * @return stdClass[]
+     */
+    private function fetchContents(): array
+    {
+        SimpleLogger::debug("Fetching contents from GitHub...");
+
+        $contents = json_decode(
+            file_get_contents(
+                'https://api.github.com/repos/jacksonrayhamilton/wordlist-english/contents/sources',
+                context: stream_context_create(['http' => ['user_agent' => $this->userAgent]])
+            )
+        );
+
+        if (!is_array($contents) || !is_a(reset($contents), stdClass::class)) {
+            throw new RuntimeException('Failed to fetch contents');
+        }
+
+        SimpleLogger::debug("Fetched " . count($contents) . " contents");
+
+        return $contents;
     }
 }
