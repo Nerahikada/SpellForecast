@@ -18,7 +18,7 @@ final class NestedDictionary
 
         foreach ($words as $word) {
             $tmp = &$nested;
-            foreach (str_split($word . "\0") as $key) {
+            foreach (str_split(strtolower($word) . "\0") as $key) {
                 $tmp = &$tmp[$key];
             }
 
@@ -32,7 +32,7 @@ final class NestedDictionary
     public function valid(string $word): bool
     {
         $current = $this->nestedArray;
-        foreach (str_split($word . "\0") as $key) {
+        foreach (str_split(strtolower($word) . "\0") as $key) {
             if (!isset($current[$key])) {
                 return false;
             } elseif (true === $current = $current[$key]) {
@@ -45,7 +45,7 @@ final class NestedDictionary
     public function continuable(string $word): bool
     {
         $current = $this->nestedArray;
-        foreach (str_split($word) as $key) {
+        foreach (str_split(strtolower($word)) as $key) {
             if (!isset($current[$key])) {
                 return false;
             }
