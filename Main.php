@@ -3,59 +3,40 @@
 declare(strict_types=1);
 
 use Nerahikada\SpellForecast\Algorithm\PathFinder;
-use Nerahikada\SpellForecast\BlackBox\WordDictionary;
+use Nerahikada\SpellForecast\Dictionary\NestedDictionary;
+use Nerahikada\SpellForecast\Dictionary\WordsProvider;
 use Nerahikada\SpellForecast\Parser\BoardParser;
 use Nerahikada\SpellForecast\Path;
 use Nerahikada\SpellForecast\Position;
-use Nerahikada\SpellForecast\Word;
-use parallel\Future;
-
-use function parallel\bootstrap;
-use function parallel\run;
+use Nerahikada\SpellForecast\Utils\Visualizer;
 
 require 'vendor/autoload.php';
-bootstrap('vendor/autoload.php');
 
-$board = (new BoardParser())->result();
+ini_set('memory_limit', '256M');
 
-/** @return string[] */
-$findValidWords = function (string $serializedBoard, string $serializedPosition) : array {
-    $board = unserialize($serializedBoard);
-    $start = unserialize($serializedPosition);
+$globalDictionary = new NestedDictionary((new WordsProvider())->result);
 
-    $pathFinder = new PathFinder($board);
-    $dictionary = new WordDictionary();
-    $serializedWords = [];
+$board = (new BoardParser())->promptAndParse();
+$pathFinder = new PathFinder($board);
+echo Visualizer::board($board) . PHP_EOL;
 
-    foreach ($pathFinder->generatePath(new Path($start), /*11*/ 8) as $path) {
+$continuablePaths = array_map(
+    fn($n) => new Path(new Position($n % $board->size, (int)($n / $board->size))),
+    range(0, $board->size ** 2 - 1)
+);
+$validWords = [];
+
+while ($root = array_shift($continuablePaths)) {
+    foreach ($pathFinder->generatePath($root) as $path) {
         $word = $board->getWord($path);
-        if ($dictionary->contain($word)) {
-            $serializedWords[] = serialize($word);
+        if ($globalDictionary->valid((string)$word)) {
+            $validWords[] = $word;
+        }
+        if ($globalDictionary->continuable((string)$word)) {
+            $continuablePaths[] = $path;
         }
     }
-
-    return $serializedWords;
-};
-
-/** @var Future[] $futures */
-$futures = [];
-echo 'Running new runtime... ';
-for ($y = 0; $y < $board->size; ++$y) {
-    for ($x = 0; $x < $board->size; ++$x) {
-        $futures[] = run($findValidWords, [serialize($board), serialize(new Position($x, $y))]);
-        echo count($futures);
-    }
 }
-echo PHP_EOL;
-
-/** @var Word[] $validWords */
-$validWords = [];
-echo 'Waiting future result... ';
-foreach ($futures as $key => $future) {
-    echo $key + 1;
-    array_push($validWords, ...array_map(unserialize(...), $future->value()));
-}
-echo PHP_EOL;
 
 usort($validWords, fn($a, $b): int => $b->point <=> $a->point);
 
@@ -63,6 +44,6 @@ for ($i = 0; $i < 5; ++$i) {
     $word = $validWords[$i];
     echo str_pad('#' . ($i + 1), 3, pad_type: STR_PAD_LEFT);
     echo ": $word->chars ($word->point) ";
-    foreach($word->path as $p) echo "($p->x,$p->y)";
+    foreach ($word->path as $p) echo "($p->x,$p->y)";
     echo PHP_EOL;
 }
