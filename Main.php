@@ -7,8 +7,8 @@ use Nerahikada\SpellForecast\Dictionary\NestedDictionary;
 use Nerahikada\SpellForecast\Dictionary\WordsProvider;
 use Nerahikada\SpellForecast\Parser\BoardParser;
 use Nerahikada\SpellForecast\Path;
-use Nerahikada\SpellForecast\Position;
 use Nerahikada\SpellForecast\Utils\Visualizer;
+use Nerahikada\SpellForecast\Word;
 
 require 'vendor/autoload.php';
 
@@ -17,17 +17,15 @@ ini_set('memory_limit', '256M');
 $globalDictionary = new NestedDictionary((new WordsProvider())->result);
 
 $board = (new BoardParser())->promptAndParse();
-$pathFinder = new PathFinder($board);
 echo Visualizer::board($board) . PHP_EOL;
 
-$continuablePaths = array_map(
-    fn($n) => new Path(new Position($n % $board->size, (int)($n / $board->size))),
-    range(0, $board->size ** 2 - 1)
-);
+$algorithm = new PathFinder($board->size);
+
+$continuablePaths = array_map(fn($p) => new Path($p), $algorithm->boardPositions());
 $validWords = [];
 
 while ($root = array_shift($continuablePaths)) {
-    foreach ($pathFinder->generatePath($root) as $path) {
+    foreach ($algorithm->generatePath($root) as $path) {
         $word = $board->getWord($path);
         if ($globalDictionary->valid((string)$word)) {
             $validWords[] = $word;
@@ -38,7 +36,7 @@ while ($root = array_shift($continuablePaths)) {
     }
 }
 
-usort($validWords, fn($a, $b): int => $b->point <=> $a->point);
+usort($validWords, fn(Word $a, Word $b): int => $b->point <=> $a->point);
 
 for ($i = 0; $i < 5; ++$i) {
     $word = $validWords[$i];
