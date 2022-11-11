@@ -4,58 +4,41 @@ declare(strict_types=1);
 
 use Nerahikada\SpellForecast\Algorithm\PathFinder;
 use Nerahikada\SpellForecast\BlackBox\WordDictionary;
+use Nerahikada\SpellForecast\Board;
 use Nerahikada\SpellForecast\Human\BoardParser;
 use Nerahikada\SpellForecast\Path;
 use Nerahikada\SpellForecast\Position;
 use Nerahikada\SpellForecast\Word;
-use parallel\Future;
-
-use function parallel\bootstrap;
-use function parallel\run;
 
 require 'vendor/autoload.php';
-bootstrap('vendor/autoload.php');
 
 $board = (new BoardParser())->result();
 
-/** @return string[] */
-$findValidWords = function (string $serializedBoard, string $serializedPosition) : array {
-    $board = unserialize($serializedBoard);
-    $start = unserialize($serializedPosition);
+$dictionary = new WordDictionary();
 
+/** @return Word[] */
+$findValidWords = function (Board $board, Position $start) use ($dictionary): array {
     $pathFinder = new PathFinder($board);
-    $dictionary = new WordDictionary();
-    $serializedWords = [];
+    $words = [];
 
     foreach ($pathFinder->generatePath(new Path($start), /*11*/ 8) as $path) {
         $word = $board->getWord($path);
         if ($dictionary->contain($word)) {
-            $serializedWords[] = serialize($word);
+            $words[] = $word;
         }
     }
 
-    return $serializedWords;
+    return $words;
 };
-
-/** @var Future[] $futures */
-$futures = [];
-echo 'Running new runtime... ';
-for ($y = 0; $y < $board->size; ++$y) {
-    for ($x = 0; $x < $board->size; ++$x) {
-        $futures[] = run($findValidWords, [serialize($board), serialize(new Position($x, $y))]);
-        echo count($futures);
-    }
-}
-echo PHP_EOL;
 
 /** @var Word[] $validWords */
 $validWords = [];
-echo 'Waiting future result... ';
-foreach ($futures as $key => $future) {
-    echo $key + 1;
-    array_push($validWords, ...array_map(unserialize(...), $future->value()));
+echo 'Finding words...' . PHP_EOL;
+for ($y = 0; $y < $board->size; ++$y) {
+    for ($x = 0; $x < $board->size; ++$x) {
+        array_push($validWords, ...$findValidWords($board, new Position($x, $y)));
+    }
 }
-echo PHP_EOL;
 
 usort($validWords, fn($a, $b): int => $b->point <=> $a->point);
 
