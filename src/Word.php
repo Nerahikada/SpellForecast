@@ -18,4 +18,9 @@ final class Word
         }
         $this->point = $point;
     }
+
+    public function __toString(): string
+    {
+        return $this->chars;
+    }
 }
