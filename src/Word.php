@@ -14,7 +14,7 @@ final class Word
         int $point
     ) {
         if (strlen($chars) >= 7) {
-            $point += 20;
+            $point += 10;
         }
         $this->point = $point;
     }
