@@ -51,7 +51,7 @@ final class BoardParser
             }
 
             if (ctype_upper($char)) {
-                $doubleWord = count($letters);
+                $doubleWord = count($letters ?? []);
             }
 
             $letters[] = new Letter($char, $multiply);
