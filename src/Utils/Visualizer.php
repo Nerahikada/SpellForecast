@@ -16,8 +16,13 @@ final class Visualizer
 
         for ($y = 0; $y < $board->size; ++$y) {
             for ($x = 0; $x < $board->size; ++$x) {
-                // TODO: colorize
-                $letters[] = (string)$board->getLetter(new Position($x, $y));
+                $letter = $board->getLetter($position = new Position($x, $y));
+                $letters[] = match (true) {
+                    $letter->multiply === 2 => "\e[0;93m$letter->char\e[0m",
+                    $letter->multiply === 3 => "\e[0;33m$letter->char\e[0m",
+                    $board->doubleWord == $position => "\e[0;105m$letter->char\e[0m",
+                    default => $letter->char,
+                };
             }
         }
 

@@ -11,7 +11,7 @@ final class Board
 {
     public readonly int $size;
     private readonly array $letters;
-    private readonly ?Position $doubleWord;
+    public readonly ?Position $doubleWord;
 
     /**
      * @param Letter[] $letters
