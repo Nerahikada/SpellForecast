@@ -13,7 +13,7 @@ final class Word
         public readonly string $chars,
         int $point
     ) {
-        if (strlen($chars) >= 7) {
+        if (strlen($chars) >= 6) {
             $point += 10;
         }
         $this->point = $point;
